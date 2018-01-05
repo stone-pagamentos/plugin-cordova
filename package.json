@@ -1,0 +1,31 @@
+{
+  "version": "1.0.1",
+  "name": "cordova-plugin-stone",
+  "cordova_name": "Cordova Stone",
+  "description": "Copied by Igor Trindade from Stone",
+  "license": "MIT",
+  "repo": "",
+  "issue": "",
+  "author": {
+    "name": "Igor Trindade",
+    "email": "igorlucast@hotmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/igortrinidad/plugin-cordova"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios",
+    "ios",
+    "android",
+    "cordova"
+  ],
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "engines": [],
+  "englishdoc": ""
+}
