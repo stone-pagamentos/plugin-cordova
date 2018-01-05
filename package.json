@@ -1,6 +1,6 @@
 {
   "version": "1.0.1",
-  "name": "cordova-plugin-stone",
+  "name": "cordova-plugin-stone-sdk",
   "cordova_name": "Cordova Stone Plugin",
   "description": "Forked by Igor Trindade from Stone to add missing package.json",
   "license": "MIT",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/igortrinidad/plugin-cordova-stone"
+    "url": "https://github.com/igortrinidad/cordova-plugin-stone-sdk.git"
   },
   "keywords": [
     "ecosystem:cordova",
