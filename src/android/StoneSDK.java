@@ -24,6 +24,7 @@ import stone.providers.ActiveApplicationProvider;
 import stone.providers.BluetoothConnectionProvider;
 import stone.providers.CancellationProvider;
 import stone.providers.TransactionProvider;
+import stone.providers.DisplayMessageProvider;
 import stone.user.UserModel;
 import stone.utils.GlobalInformations;
 import stone.utils.PinpadObject;
@@ -43,6 +44,7 @@ public class StoneSDK extends CordovaPlugin {
     private static final String TRANSACTION_CANCEL = "transactionCancel";
     private static final String TRANSACTION_LIST = "transactionList";
     private static final String VALIDATION = "validation";
+    private static final String DISPLAY_MESSAGE = "displayMessage";
 
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
 
@@ -74,10 +76,15 @@ public class StoneSDK extends CordovaPlugin {
         } else if (action.equals(SET_ENVIRONMENT)) {
             setEnvironment(data);
             return true;
+        } else if (action.equals(DISPLAY_MESSAGE)) {
+            displayMessage(data, callbackContext);
+            return true;
         } else {
             return false;
         }
     }
+
+    
 
     public void turnBluetoothOn() {
         try {
@@ -378,6 +385,41 @@ public class StoneSDK extends CordovaPlugin {
             }
         });
         provider.execute();
+    }
+
+    /*
+    * Display a message on connected PinPad
+    */
+    public void displayMessage(JSONArray data, final CallbackContext callbackContext) throws JSONException {
+
+        String deviceName = data.getString(0);
+        String deviceMacAddress = data.getString(1);
+        String messageToDisplay = data.getString(2);
+
+        PinpadObject pinpad = new PinpadObject(deviceName, deviceMacAddress, false);
+
+        DisplayMessageProvider displayMessageProvider = new DisplayMessageProvider(StoneSDK.this.cordova.getActivity(), messageToDisplay, pinpad);
+
+        displayMessageProvider.setDialogMessage("Ativando o aplicativo...");
+        displayMessageProvider.setDialogTitle("Aguarde");
+
+        displayMessageProvider.setWorkInBackground(false); // informa se este provider ira rodar em background ou nao
+        displayMessageProvider.setConnectionCallback(new StoneCallbackInterface() {
+
+            public void onSuccess() {
+                Toast.makeText(StoneSDK.this.cordova.getActivity(), "Msg enviada com sucesso", Toast.LENGTH_SHORT).show();
+                callbackContext.success("Ativado com sucesso");
+            }
+
+            public void onError() {
+                Toast.makeText(StoneSDK.this.cordova.getActivity(), "Erro no envio da mensagem", Toast.LENGTH_SHORT).show();
+                callbackContext.error(displayMessageProvider.getListOfErrors().toString());
+            }
+
+        });
+
+        displayMessageProvider.execute();
+
     }
 
 }

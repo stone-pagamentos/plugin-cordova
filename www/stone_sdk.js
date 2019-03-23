@@ -20,4 +20,7 @@ module.exports = {
   validation: function (stoneCodeList, successCallback, errorCallback) {
     cordova.exec(successCallback, errorCallback, "StoneSDK", "validation", [stoneCodeList]);
   },
+  displayMessage: function (deviceName, deviceMacAddress, messageToDisplay, successCallback, errorCallback) {
+    cordova.exec(successCallback, errorCallback, "StoneSDK", "displayMessage", [deviceName, deviceMacAddress, messageToDisplay]);
+  },
 };
