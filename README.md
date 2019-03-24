@@ -62,7 +62,7 @@ A SDK do iOS pode ser encontrada [aqui](https://github.com/stone-pagamentos/sdk-
 - [stone_sdk.transaction](#transaction)
 - [stone_sdk.transactionList](#transactionlist)
 - [stone_sdk.transactionCancel](#transactioncancel)
-
+- [stone_sdk.displayMessage](#displayMessage)
 
 ## validation
 
@@ -157,5 +157,23 @@ A função `transactionCancel` é responsável pelo cancelamento da transação 
 ### Parâmetros
 
 - __idTransaction_amountTransaction_statusTransaction__: Id da transação, valor transacionado e o seu status.
+- __success__: Callback de sucesso.
+- __failure__: Callback de falha.
+
+## displayMessage
+
+Exibe uma mensagem no pinpad conectado
+
+    stone_sdk.displayMessage(deviceName, deviceMacAddress, messageToDisplay, success, failure);
+    
+### Descrição
+
+A função `displayMessage` é responsável pelo envio de uma mensagem para o display do pinpad.
+
+### Parâmetros
+
+- __deviceName__: Nome do dispositivo utilizado na conexão.
+- __deviceMacAddress__: Endereço Mac do dispotivo.
+- __messageToDisplay__: Mensagem a ser exibida no display.
 - __success__: Callback de sucesso.
 - __failure__: Callback de falha.
