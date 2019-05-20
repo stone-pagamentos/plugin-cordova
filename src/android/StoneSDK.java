@@ -22,6 +22,7 @@ import stone.database.transaction.TransactionDAO;
 import stone.database.transaction.TransactionObject;
 import stone.providers.ActiveApplicationProvider;
 import stone.providers.BluetoothConnectionProvider;
+import stone.providers.DisplayMessageProvider;
 import stone.providers.CancellationProvider;
 import stone.providers.TransactionProvider;
 import stone.user.UserModel;
@@ -38,6 +39,8 @@ public class StoneSDK extends CordovaPlugin {
 
     private static final String DEVICE = "device";
     private static final String DEVICE_SELECTED = "deviceSelected";
+    private static final String DEVICE_DISPLAY = "deviceDisplay";
+    private static final String IS_DEVICE_CONNECTED = "isDeviceConnected";
     private static final String SET_ENVIRONMENT = "setEnvironment";
     private static final String TRANSACTION = "transaction";
     private static final String TRANSACTION_CANCEL = "transactionCancel";
@@ -53,6 +56,9 @@ public class StoneSDK extends CordovaPlugin {
         } else if (action.equals(DEVICE_SELECTED)) {
             bluetoothSelected(data, callbackContext);
             return true;
+        } else if (action.equals(DEVICE_DISPLAY)) {
+            bluetoothDisplay(data, callbackContext);
+            return true;
         } else if (action.equals(TRANSACTION)) {
             transaction(data, callbackContext);
             return true;
@@ -61,6 +67,9 @@ public class StoneSDK extends CordovaPlugin {
             return true;
         } else if (action.equals(TRANSACTION_LIST)) {
             transactionList(callbackContext);
+            return true;
+        } else if (action.equals(IS_DEVICE_CONNECTED)) {
+            bluetoothIsConnected(callbackContext);
             return true;
         } else if (action.equals(VALIDATION)) {
             List<UserModel> user = StoneStart.init(this.cordova.getActivity());
@@ -108,6 +117,15 @@ public class StoneSDK extends CordovaPlugin {
         }
     }
 
+    private void bluetoothIsConnected(CallbackContext callbackContext) throws JSONException {
+        // Lista de Pinpads para passar para o BluetoothConnectionProvider.
+        Boolean isConnected = GlobalInformations.isConnectedToPinpad();
+        String result = String.valueOf(isConnected);
+
+        callbackContext.success(result);
+    }
+
+
     private void bluetoothSelected(JSONArray data, final CallbackContext callbackContext) throws JSONException {
         // Pega o pinpad selecionado.
         String arrayList = data.getString(0);
@@ -138,6 +156,30 @@ public class StoneSDK extends CordovaPlugin {
         });
         bluetoothConnectionProvider.execute(); // Executa o provider de conexao bluetooth.
     }
+
+    private void bluetoothDisplay(JSONArray data, final CallbackContext callbackContext) throws JSONException {
+        // Pega o pinpad selecionado.
+        String displayMessage = data.getString(0);
+
+        DisplayMessageProvider displayMessageProvider = new DisplayMessageProvider(StoneSDK.this.cordova.getActivity(), displayMessage, Stone.getPinpadFromListAt(0));
+        /* displayMessageProvider.setDialogMessage("Criando conexao com o pinpad selecionado"); // Mensagem exibida do dialog. */
+        displayMessageProvider.setWorkInBackground(false); // Informa que haverá um feedback para o usuário.
+        displayMessageProvider.setConnectionCallback(new StoneCallbackInterface() {
+
+            public void onSuccess() {
+                /* Toast.makeText(StoneSDK.this.cordova.getActivity(), "Pinpad conectado", Toast.LENGTH_SHORT).show(); */
+                callbackContext.success();
+            }
+
+            public void onError() {
+                /* Toast.makeText(StoneSDK.this.cordova.getActivity(), "Erro durante a conexao. Verifique a lista de erros do provider para mais informacoes", Toast.LENGTH_SHORT).show(); */
+                callbackContext.error("Testando agora erro");
+            }
+
+        });
+        displayMessageProvider.execute();
+    }
+
 
     private void stoneCodeValidation(JSONArray data, final CallbackContext callbackContext) throws JSONException {
         List<String> stoneCodeList = new ArrayList<String>();
