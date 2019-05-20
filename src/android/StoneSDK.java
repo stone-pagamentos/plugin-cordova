@@ -69,6 +69,7 @@ public class StoneSDK extends CordovaPlugin {
                 return true;
             } else {
                 Toast.makeText(StoneSDK.this.cordova.getActivity(), "StoneCode ja cadastrado", Toast.LENGTH_SHORT).show();
+                callbackContext.success();
                 return true;
             }
         } else if (action.equals(SET_ENVIRONMENT)) {
@@ -212,7 +213,7 @@ public class StoneSDK extends CordovaPlugin {
                 obj.put("actionCode",   String.valueOf(list.getActionCode()));
                 obj.put("commandActionCode",   String.valueOf(list.getCommandActionCode()));
                 obj.put("pinpadUsed",   String.valueOf(list.getPinpadUsed()));
-                obj.put("userModelSale",   String.valueOf(list.getUserModelSale()));
+                obj.put("saleAffiliationKey",   String.valueOf(list.getSaleAffiliationKey()));
                 obj.put("cne",   String.valueOf(list.getCne()));
                 obj.put("cvm",   String.valueOf(list.getCvm()));
                 obj.put("serviceCode",   String.valueOf(list.getServiceCode()));
@@ -274,13 +275,13 @@ public class StoneSDK extends CordovaPlugin {
         // Cria o objeto de transacao. Usar o "GlobalInformations.getPinpadFromListAt"
         // significa que devera estar conectado com ao menos um pinpad, pois o metodo
         // cria uma lista de conectados e conecta com quem estiver na posicao "0".
-        StoneTransaction stoneTransaction = new StoneTransaction(Stone.getPinpadFromListAt(0));
+        TransactionObject transaction = new TransactionObject();
 
         // A seguir deve-se popular o objeto.
-        stoneTransaction.setAmount(amount);
-        stoneTransaction.setEmailClient(null);
-        stoneTransaction.setRequestId(null);
-        stoneTransaction.setUserModel(Stone.getUserModel(0));
+        transaction.setAmount(amount);
+        transaction.setEmailClient(null);
+        transaction.setRequestId(null);
+        transaction.setUserModel(Stone.getUserModel(0));
 
         // Verifica a forma de pagamento selecionada.
         String method = data.getString(1);
@@ -291,18 +292,18 @@ public class StoneSDK extends CordovaPlugin {
         System.out.println("getInstalments: " + instalments);
 
         if (method.equals("DEBIT")) {
-            stoneTransaction.setInstalmentTransactionEnum(InstalmentTransactionEnum.getAt(0));
-            stoneTransaction.setTypeOfTransaction(TypeOfTransactionEnum.DEBIT);
+            transaction.setInstalmentTransactionEnum(InstalmentTransactionEnum.getAt(0));
+            transaction.setTypeOfTransaction(TypeOfTransactionEnum.DEBIT);
         } else if (method.equals("CREDIT")) {
             // Informa a quantidade de parcelas.
-            stoneTransaction.setInstalmentTransactionEnum(InstalmentTransactionEnum.valueOf(instalments));
-            stoneTransaction.setTypeOfTransaction(TypeOfTransactionEnum.CREDIT);
+            transaction.setInstalmentTransactionEnum(InstalmentTransactionEnum.valueOf(instalments));
+            transaction.setTypeOfTransaction(TypeOfTransactionEnum.CREDIT);
         } else {
             System.out.println("Empty Payment Method");
         }
 
         // Processo para envio da transacao.
-        final TransactionProvider provider = new TransactionProvider(StoneSDK.this.cordova.getActivity(), stoneTransaction, Stone.getPinpadFromListAt(0));
+        final TransactionProvider provider = new TransactionProvider(StoneSDK.this.cordova.getActivity(), transaction, Stone.getUserModel(0), Stone.getPinpadFromListAt(0));
 
         provider.setWorkInBackground(true);
 
@@ -342,7 +343,7 @@ public class StoneSDK extends CordovaPlugin {
                         obj.put("actionCode",   String.valueOf(list.getActionCode()));
                         obj.put("commandActionCode",   String.valueOf(list.getCommandActionCode()));
                         obj.put("pinpadUsed",   String.valueOf(list.getPinpadUsed()));
-                        obj.put("userModelSale",   String.valueOf(list.getUserModelSale()));
+                        obj.put("saleAffiliationKey",   String.valueOf(list.getSaleAffiliationKey()));
                         obj.put("cne",   String.valueOf(list.getCne()));
                         obj.put("cvm",   String.valueOf(list.getCvm()));
                         obj.put("serviceCode",   String.valueOf(list.getServiceCode()));
