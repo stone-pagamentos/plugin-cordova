@@ -3,6 +3,7 @@ package br.com.stone.cordova.sdk;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.widget.Toast;
+import android.util.Log;
 
 import org.apache.cordova.*;
 import org.json.JSONArray;
@@ -29,7 +30,6 @@ import stone.user.UserModel;
 import stone.utils.GlobalInformations;
 import stone.utils.PinpadObject;
 import stone.utils.Stone;
-import stone.utils.StoneTransaction;
 import stone.cache.ApplicationCache;
 import stone.environment.Environment;
 
@@ -41,6 +41,7 @@ public class StoneSDK extends CordovaPlugin {
     private static final String DEVICE_SELECTED = "deviceSelected";
     private static final String DEVICE_DISPLAY = "deviceDisplay";
     private static final String IS_DEVICE_CONNECTED = "isDeviceConnected";
+    private static final String SET_APP_NAME = "setAppName";
     private static final String SET_ENVIRONMENT = "setEnvironment";
     private static final String TRANSACTION = "transaction";
     private static final String TRANSACTION_CANCEL = "transactionCancel";
@@ -52,6 +53,9 @@ public class StoneSDK extends CordovaPlugin {
         if (action.equals(DEVICE)) {
             turnBluetoothOn();
             bluetoothList(callbackContext);
+            return true;
+        } else if (action.equals(SET_APP_NAME)) {
+            Stone.setAppName(data.getString(0));
             return true;
         } else if (action.equals(DEVICE_SELECTED)) {
             bluetoothSelected(data, callbackContext);
@@ -309,8 +313,8 @@ public class StoneSDK extends CordovaPlugin {
     }
 
     private void transaction(JSONArray data, final CallbackContext callbackContext) throws JSONException {
-
         String amount = data.getString(0);
+
         final  String success_message = data.getString(3);
         System.out.println("getAmount: " + amount);
 
@@ -321,7 +325,6 @@ public class StoneSDK extends CordovaPlugin {
 
         // A seguir deve-se popular o objeto.
         transaction.setAmount(amount);
-        transaction.setEmailClient(null);
         transaction.setRequestId(null);
         transaction.setUserModel(Stone.getUserModel(0));
 
@@ -334,11 +337,11 @@ public class StoneSDK extends CordovaPlugin {
         System.out.println("getInstalments: " + instalments);
 
         if (method.equals("DEBIT")) {
-            transaction.setInstalmentTransactionEnum(InstalmentTransactionEnum.getAt(0));
+            transaction.setInstalmentTransaction(InstalmentTransactionEnum.getAt(0));
             transaction.setTypeOfTransaction(TypeOfTransactionEnum.DEBIT);
         } else if (method.equals("CREDIT")) {
             // Informa a quantidade de parcelas.
-            transaction.setInstalmentTransactionEnum(InstalmentTransactionEnum.valueOf(instalments));
+            transaction.setInstalmentTransaction(InstalmentTransactionEnum.valueOf(instalments));
             transaction.setTypeOfTransaction(TypeOfTransactionEnum.CREDIT);
         } else {
             System.out.println("Empty Payment Method");
