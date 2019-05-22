@@ -29,7 +29,6 @@ import stone.user.UserModel;
 import stone.utils.GlobalInformations;
 import stone.utils.PinpadObject;
 import stone.utils.Stone;
-import stone.utils.StoneTransaction;
 import stone.cache.ApplicationCache;
 import stone.environment.Environment;
 
@@ -321,7 +320,6 @@ public class StoneSDK extends CordovaPlugin {
 
         // A seguir deve-se popular o objeto.
         transaction.setAmount(amount);
-        transaction.setEmailClient(null);
         transaction.setRequestId(null);
         transaction.setUserModel(Stone.getUserModel(0));
 
@@ -334,11 +332,11 @@ public class StoneSDK extends CordovaPlugin {
         System.out.println("getInstalments: " + instalments);
 
         if (method.equals("DEBIT")) {
-            transaction.setInstalmentTransactionEnum(InstalmentTransactionEnum.getAt(0));
+            transaction.setInstalmentTransaction(InstalmentTransactionEnum.getAt(0));
             transaction.setTypeOfTransaction(TypeOfTransactionEnum.DEBIT);
         } else if (method.equals("CREDIT")) {
             // Informa a quantidade de parcelas.
-            transaction.setInstalmentTransactionEnum(InstalmentTransactionEnum.valueOf(instalments));
+            transaction.setInstalmentTransaction(InstalmentTransactionEnum.valueOf(instalments));
             transaction.setTypeOfTransaction(TypeOfTransactionEnum.CREDIT);
         } else {
             System.out.println("Empty Payment Method");
