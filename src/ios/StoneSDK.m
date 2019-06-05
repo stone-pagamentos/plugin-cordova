@@ -35,14 +35,14 @@
     // Efetua a conexão com o pinpad
     NSArray *pinpads =[[STNPinPadConnectionProvider new] listConnectedPinpads];
     STNPinpad *pinpad;
-    UIAlertView *alert;
-    NSString* msg = @"";
-    NSString* title = @"";
+    __block UIAlertView *alert;
+    __block NSString* msg = @"";
+    __block NSString* title = @"";
 
     if(pinpads.count > 0) {
         pinpad = [pinpads objectAtIndex:0];
         BOOL hasConnected = [[STNPinPadConnectionProvider new] selectPinpad:pinpad];
-        
+
         if (hasConnected) {
             [STNPinPadConnectionProvider connectToPinpad:^(BOOL succeeded, NSError *error) {
                 if (succeeded) {
@@ -52,7 +52,7 @@
                     msg = @"Não foi possivel conectar ao pinpad!";
                     title = @"Oops!";
                 }
-                
+
                 alert = [[UIAlertView alloc]
                          initWithTitle: title
                          message:msg
@@ -63,7 +63,7 @@
         } else {
             msg = @"Não foi possivel conectar ao pinpad!";
             title = @"Oops!";
-            
+
             alert = [[UIAlertView alloc]
                          initWithTitle: title
                          message:msg
@@ -74,7 +74,7 @@
     } else {
         msg = @"Não foi possivel conectar ao pinpad!";
         title = @"Oops!";
-        
+
         alert = [[UIAlertView alloc]
                          initWithTitle: title
                          message:msg
@@ -83,6 +83,41 @@
                          otherButtonTitles:nil];
     }
     [alert show];
+}
+
+- (void)isDeviceConnected:(CDVInvokedUrlCommand*)command {
+
+  CDVPluginResult* result;
+  if ([STNValidationProvider validatePinpadConnection] == YES) {
+    NSLog(@"Pinpad está conectado ao celular");
+    NSString* msg = @"true";
+    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:msg];
+  } else {
+    NSLog(@"Pinpad não está conectado ao celular");
+    NSString* msg = @"false";
+    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:msg];
+  }
+  [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)deviceDisplay:(CDVInvokedUrlCommand*)command {
+
+    // Recebe a mensagem
+    NSString* message = [[command arguments] objectAtIndex:0];
+
+    [STNDisplayProvider displayMessage:message withBlock:^(BOOL succeeded, NSError *error) {
+        CDVPluginResult* result;
+        if (succeeded) {
+            NSLog(@"Mensagem enviada para pinpad.");
+            NSString* msg = @"Mensagem enviada para pinpad.";
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:msg];
+        } else {
+            NSLog(@"%@", error.description);
+            NSString* msg = error.description;
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:msg];
+        }
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
 }
 
 - (void)transaction:(CDVInvokedUrlCommand*)command {
@@ -267,13 +302,13 @@
 
     NSArray *transactionsList = [STNTransactionListProvider listTransactions];
     NSMutableArray *msg = [NSMutableArray array];
-    
+
     for (STNTransactionModel *transaction in transactionsList) {
         // Tratamento do amount somente para exibição.
         int centsValue = [transaction.amount intValue];
         float realValue = centsValue*0.01;
         NSString *amount = [NSString stringWithFormat:@"%.02f", realValue];
-        
+
         // Tratamento do status.
         NSString *shortStatus;
         if ([transaction.statusString isEqual: @"Transação Aprovada"]) {
@@ -283,14 +318,14 @@
         } else {
             shortStatus = transaction.statusString;
         }
-        
+
         NSString *date = transaction.dateString;
-        
+
         NSString *idTransaction = [NSString stringWithFormat: @"R$ %@ %@ %@", amount, shortStatus, date];
 
         [msg addObject:idTransaction];
     }
-    
+
     CDVPluginResult* result = [CDVPluginResult
                                resultWithStatus:CDVCommandStatus_OK
                                messageAsArray:msg];
@@ -305,7 +340,7 @@
     int value = [transactionLastCharacter integerValue];
 
     STNTransactionModel *transactionInfoProvider = [transactions objectAtIndex:value];
-    
+
     [STNCancellationProvider cancelTransaction:transactionInfoProvider withBlock:^(BOOL succeeded, NSError *error) {
         CDVPluginResult* result;
         if (succeeded) {
