@@ -138,6 +138,7 @@
 
     // Propriedade Obrigatória, deve conter o valor da transação em centavos. (EX. R$ 56,45 = 5645);
     transaction.amount = [NSNumber numberWithInteger:justCents];
+    transaction.merchant = [STNMerchantListProvider listMerchants][0];
 
     // Recebe o método de pagamento do Plugin
     NSString* method = [[command arguments] objectAtIndex:1];

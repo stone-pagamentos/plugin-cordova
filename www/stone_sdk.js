@@ -3,6 +3,10 @@ module.exports = {
     cordova.exec(null, null, "StoneSDK", "setEnvironment", [environment]);
   },
   setAppName: function (name) {
+    if (device && device.platform == 'iOS') {
+      return;
+    }
+
     cordova.exec(null, null, "StoneSDK", "setAppName", [name]);
   },
   device: function (successCallback, errorCallback) {
