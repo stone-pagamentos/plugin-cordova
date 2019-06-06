@@ -255,7 +255,7 @@ public class StoneSDK extends CordovaPlugin {
                 obj.put("arcq",   String.valueOf(list.getArcq()));
                 obj.put("authorizationCode",   String.valueOf(list.getAuthorizationCode()));
                 obj.put("iccRelatedData",   String.valueOf(list.getIccRelatedData()));
-                obj.put("transactionReference",   String.valueOf(list.getTransactionReference()));
+                obj.put("transactionReference",   String.valueOf(list.getRecipientTransactionIdentification()));
                 obj.put("actionCode",   String.valueOf(list.getActionCode()));
                 obj.put("commandActionCode",   String.valueOf(list.getCommandActionCode()));
                 obj.put("pinpadUsed",   String.valueOf(list.getPinpadUsed()));
@@ -425,5 +425,4 @@ public class StoneSDK extends CordovaPlugin {
         });
         provider.execute();
     }
-
 }

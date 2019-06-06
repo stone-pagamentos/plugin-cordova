@@ -301,31 +301,55 @@
 
 - (void)transactionList:(CDVInvokedUrlCommand*)command {
 
-    NSArray *transactionsList = [STNTransactionListProvider listTransactions];
-    NSMutableArray *msg = [NSMutableArray array];
+    NSArray *transactions = [STNTransactionListProvider listTransactions];
+    NSArray *merchantsList = [STNMerchantListProvider listMerchants];
 
-    for (STNTransactionModel *transaction in transactionsList) {
-        // Tratamento do amount somente para exibição.
-        int centsValue = [transaction.amount intValue];
-        float realValue = centsValue*0.01;
-        NSString *amount = [NSString stringWithFormat:@"%.02f", realValue];
+    STNMerchantModel *merchant  = [merchantsList objectAtIndex:0];
 
-        // Tratamento do status.
-        NSString *shortStatus;
-        if ([transaction.statusString isEqual: @"Transação Aprovada"]) {
-            shortStatus = @"Aprovada";
-        } else if ([transaction.statusString isEqual:@"Transação Cancelada"]) {
-            shortStatus = @"Cancelada";
-        } else {
-            shortStatus = transaction.statusString;
-        }
+    STNTransactionModel *transactionInfoProvider = [transactions objectAtIndex:0];
+    NSLog(@"transactionInfoProvider, %@", transactionInfoProvider);
 
-        NSString *date = transaction.dateString;
+    // Tratamento do amount somente para exibição.
+    int centsValue = [transactionInfoProvider.amount intValue];
+    float realValue = centsValue*1;
+    NSString *amount = [NSString stringWithFormat:@"%.f", realValue];
+    NSString *sak = merchant.saleAffiliationKey;
 
-        NSString *idTransaction = [NSString stringWithFormat: @"R$ %@ %@ %@", amount, shortStatus, date];
-
-        [msg addObject:idTransaction];
+    // Tratamento do status.
+    NSString *shortStatus;
+    if ([transactionInfoProvider.statusString isEqual: @"Transação Aprovada"]) {
+        shortStatus = @"APPROVED";
+    } else if ([transactionInfoProvider.statusString isEqual:@"Transação Cancelada"]) {
+        shortStatus = @"REFUSED";
+    } else {
+        shortStatus = transactionInfoProvider.statusString;
     }
+
+    NSString * date = transactionInfoProvider.dateString;
+    NSString *holderName = transactionInfoProvider.cardHolderName;
+    NSString *pan = transactionInfoProvider.pan;
+    NSString *cardbrand = [transactionInfoProvider.cardBrandString lowercaseString];
+    NSString *authCode = transactionInfoProvider.authorisationCode;
+    NSString *initKey = transactionInfoProvider.initiatorTransactionKey;
+    NSString *rcptTransaction = transactionInfoProvider.receiptTransactionKey;
+    NSString *mposId = transactionInfoProvider.aid;
+
+    NSString *idTransaction = [NSString stringWithFormat: @"R$ %@\n%@\n%@", amount, shortStatus, date];
+
+    NSDictionary *dict = @{
+      @"mpos_id": mposId,
+      @"saleAffiliationKey": sak,
+      @"amount": amount,
+      @"transactionStatus": shortStatus,
+      @"initiatorTransactionKey": initKey,
+      @"transactionReference": rcptTransaction,
+      @"cardHolderName": holderName,
+      @"cardHolderNumber": pan,
+      @"cardBrand": cardbrand,
+      @"authotizationCode": authCode
+    };
+
+    NSArray *msg = [NSArray arrayWithObjects:dict, nil];
 
     CDVPluginResult* result = [CDVPluginResult
                                resultWithStatus:CDVCommandStatus_OK
