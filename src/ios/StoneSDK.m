@@ -35,14 +35,14 @@
     // Efetua a conexão com o pinpad
     NSArray *pinpads =[[STNPinPadConnectionProvider new] listConnectedPinpads];
     STNPinpad *pinpad;
-    UIAlertView *alert;
-    NSString* msg = @"";
-    NSString* title = @"";
+    __block UIAlertView *alert;
+    __block NSString* msg = @"";
+    __block NSString* title = @"";
 
     if(pinpads.count > 0) {
         pinpad = [pinpads objectAtIndex:0];
         BOOL hasConnected = [[STNPinPadConnectionProvider new] selectPinpad:pinpad];
-        
+
         if (hasConnected) {
             [STNPinPadConnectionProvider connectToPinpad:^(BOOL succeeded, NSError *error) {
                 if (succeeded) {
@@ -52,7 +52,7 @@
                     msg = @"Não foi possivel conectar ao pinpad!";
                     title = @"Oops!";
                 }
-                
+
                 alert = [[UIAlertView alloc]
                          initWithTitle: title
                          message:msg
@@ -63,7 +63,7 @@
         } else {
             msg = @"Não foi possivel conectar ao pinpad!";
             title = @"Oops!";
-            
+
             alert = [[UIAlertView alloc]
                          initWithTitle: title
                          message:msg
@@ -74,7 +74,7 @@
     } else {
         msg = @"Não foi possivel conectar ao pinpad!";
         title = @"Oops!";
-        
+
         alert = [[UIAlertView alloc]
                          initWithTitle: title
                          message:msg
@@ -83,6 +83,41 @@
                          otherButtonTitles:nil];
     }
     [alert show];
+}
+
+- (void)isDeviceConnected:(CDVInvokedUrlCommand*)command {
+
+  CDVPluginResult* result;
+  if ([STNValidationProvider validatePinpadConnection] == YES) {
+    NSLog(@"Pinpad está conectado ao celular");
+    NSString* msg = @"true";
+    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:msg];
+  } else {
+    NSLog(@"Pinpad não está conectado ao celular");
+    NSString* msg = @"false";
+    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:msg];
+  }
+  [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)deviceDisplay:(CDVInvokedUrlCommand*)command {
+
+    // Recebe a mensagem
+    NSString* message = [[command arguments] objectAtIndex:0];
+
+    [STNDisplayProvider displayMessage:message withBlock:^(BOOL succeeded, NSError *error) {
+        CDVPluginResult* result;
+        if (succeeded) {
+            NSLog(@"Mensagem enviada para pinpad.");
+            NSString* msg = @"Mensagem enviada para pinpad.";
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:msg];
+        } else {
+            NSLog(@"%@", error.description);
+            NSString* msg = error.description;
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:msg];
+        }
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
 }
 
 - (void)transaction:(CDVInvokedUrlCommand*)command {
@@ -103,6 +138,7 @@
 
     // Propriedade Obrigatória, deve conter o valor da transação em centavos. (EX. R$ 56,45 = 5645);
     transaction.amount = [NSNumber numberWithInteger:justCents];
+    transaction.merchant = [STNMerchantListProvider listMerchants][0];
 
     // Recebe o método de pagamento do Plugin
     NSString* method = [[command arguments] objectAtIndex:1];
@@ -265,32 +301,56 @@
 
 - (void)transactionList:(CDVInvokedUrlCommand*)command {
 
-    NSArray *transactionsList = [STNTransactionListProvider listTransactions];
-    NSMutableArray *msg = [NSMutableArray array];
-    
-    for (STNTransactionModel *transaction in transactionsList) {
-        // Tratamento do amount somente para exibição.
-        int centsValue = [transaction.amount intValue];
-        float realValue = centsValue*0.01;
-        NSString *amount = [NSString stringWithFormat:@"%.02f", realValue];
-        
-        // Tratamento do status.
-        NSString *shortStatus;
-        if ([transaction.statusString isEqual: @"Transação Aprovada"]) {
-            shortStatus = @"Aprovada";
-        } else if ([transaction.statusString isEqual:@"Transação Cancelada"]) {
-            shortStatus = @"Cancelada";
-        } else {
-            shortStatus = transaction.statusString;
-        }
-        
-        NSString *date = transaction.dateString;
-        
-        NSString *idTransaction = [NSString stringWithFormat: @"R$ %@ %@ %@", amount, shortStatus, date];
+    NSArray *transactions = [STNTransactionListProvider listTransactions];
+    NSArray *merchantsList = [STNMerchantListProvider listMerchants];
 
-        [msg addObject:idTransaction];
+    STNMerchantModel *merchant  = [merchantsList objectAtIndex:0];
+
+    STNTransactionModel *transactionInfoProvider = [transactions objectAtIndex:0];
+    NSLog(@"transactionInfoProvider, %@", transactionInfoProvider);
+
+    // Tratamento do amount somente para exibição.
+    int centsValue = [transactionInfoProvider.amount intValue];
+    float realValue = centsValue*1;
+    NSString *amount = [NSString stringWithFormat:@"%.f", realValue];
+    NSString *sak = merchant.saleAffiliationKey;
+
+    // Tratamento do status.
+    NSString *shortStatus;
+    if ([transactionInfoProvider.statusString isEqual: @"Transação Aprovada"]) {
+        shortStatus = @"APPROVED";
+    } else if ([transactionInfoProvider.statusString isEqual:@"Transação Cancelada"]) {
+        shortStatus = @"REFUSED";
+    } else {
+        shortStatus = transactionInfoProvider.statusString;
     }
-    
+
+    NSString * date = transactionInfoProvider.dateString;
+    NSString *holderName = transactionInfoProvider.cardHolderName;
+    NSString *pan = transactionInfoProvider.pan;
+    NSString *cardbrand = [transactionInfoProvider.cardBrandString lowercaseString];
+    NSString *authCode = transactionInfoProvider.authorisationCode;
+    NSString *initKey = transactionInfoProvider.initiatorTransactionKey;
+    NSString *rcptTransaction = transactionInfoProvider.receiptTransactionKey;
+    NSString *mposId = transactionInfoProvider.aid;
+
+    NSString *idTransaction = [NSString stringWithFormat: @"R$ %@\n%@\n%@", amount, shortStatus, date];
+
+    NSDictionary *dict = @{
+      @"mpos_id": mposId,
+      @"saleAffiliationKey": sak,
+      @"amount": amount,
+      @"transactionStatus": shortStatus,
+      @"initiatorTransactionKey": initKey,
+      @"transactionReference": rcptTransaction,
+      @"cardHolderName": holderName,
+      @"cardHolderNumber": pan,
+      @"cardBrand": cardbrand,
+      @"authotizationCode": authCode
+    };
+
+    NSArray *msg = [NSArray arrayWithObjects:dict, nil];
+
     CDVPluginResult* result = [CDVPluginResult
                                resultWithStatus:CDVCommandStatus_OK
                                messageAsArray:msg];
@@ -305,7 +365,7 @@
     int value = [transactionLastCharacter integerValue];
 
     STNTransactionModel *transactionInfoProvider = [transactions objectAtIndex:value];
-    
+
     [STNCancellationProvider cancelTransaction:transactionInfoProvider withBlock:^(BOOL succeeded, NSError *error) {
         CDVPluginResult* result;
         if (succeeded) {
